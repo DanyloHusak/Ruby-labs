@@ -1,0 +1,8 @@
+<%= form_with(model: competition, local: true, class: "mb-3") do |form| %>
+  <div class="mb-3">
+    <%= form.label :name, "Назва змагання", class: "form-label" %>
+    <%= form.text_field :name, class: "form-control" %>
+  </div>
+
+  <%= form.submit class: "btn btn-success" %>
+<% end %>

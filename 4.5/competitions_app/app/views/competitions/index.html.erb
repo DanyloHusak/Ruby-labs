@@ -1,0 +1,26 @@
+<h1>Змагання</h1>
+
+<%= link_to "Нове змагання", new_competition_path, class: "btn btn-primary mb-3" %>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Назва</th>
+      <th>Дії</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @competitions.each do |competition| %>
+      <tr>
+        <td><%= competition.id %></td>
+        <td><%= competition.name %></td>
+        <td>
+          <%= link_to "Переглянути", competition, class: "btn btn-sm btn-info" %>
+          <%= link_to "Редагувати", edit_competition_path(competition), class: "btn btn-sm btn-warning" %>
+          <%= link_to "Видалити", competition, method: :delete, data: { confirm: "Точно видалити?" }, class: "btn btn-sm btn-danger" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
