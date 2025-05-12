@@ -1,84 +1,170 @@
 require 'json'
 
-class Contact
-  attr_accessor :name, :phone
+class Sport
+  attr_accessor :name
 
-  def initialize(name, phone)
+  def initialize(name)
     @name = name
-    @phone = phone
+  end
+
+  def to_hash
+    { name: @name }
+  end
+
+  def self.from_hash(hash)
+    new(hash[:name])
   end
 end
 
-class ContactBook
+class Team
+  attr_accessor :name, :phones
+
+  def initialize(name, phones)
+    @name = name
+    @phones = phones
+  end
+
+  def to_hash
+    { name: @name, phones: @phones }
+  end
+
+  def self.from_hash(hash)
+    new(hash[:name], hash[:phones])
+  end
+end
+
+class Competition
+  attr_accessor :id, :name, :sports, :teams
+
+  def initialize(id, name, sports, teams)
+    @id = id
+    @name = name
+    @sports = sports
+    @teams = teams
+  end
+
+  def to_hash
+    {
+      id: @id,
+      name: @name,
+      sports: @sports.map(&:to_hash),
+      teams: @teams.map(&:to_hash)
+    }
+  end
+
+  def self.from_hash(hash)
+    sports = hash[:sports].map { |s| Sport.from_hash(s) }
+    teams = hash[:teams].map { |t| Team.from_hash(t) }
+    new(hash[:id], hash[:name], sports, teams)
+  end
+end
+
+class CompetitionManager
   def initialize
-    @contacts = []
+    @competitions = load_from_file
   end
 
-  def add_contact
-    print "Ім'я: "
-    name = gets.chomp
-    print "Телефон: "
-    phone = gets.chomp
-    @contacts << Contact.new(name, phone)
-  end
-
-  def view_contacts
-    if @contacts.empty?
-      puts "Контакти відсутні."
-    else
-      puts "\nСписок контактів:"
-      @contacts.each_with_index do |contact, i|
-        puts "#{i + 1}. #{contact.name} - #{contact.phone}"
+  def list
+    @competitions.each do |c|
+      puts "ID: #{c.id}, Назва: #{c.name}"
+      puts "  Види спорту: #{c.sports.map(&:name).join(', ')}"
+      puts "  Команди:"
+      c.teams.each do |t|
+        puts "    #{t.name} (#{t.phones.join(', ')})"
       end
     end
   end
 
-  def edit_contact
-    print "Номер контакту для редагування: "
-    index = gets.to_i - 1
-    if @contacts[index]
-      print "Нове ім'я: "
-      @contacts[index].name = gets.chomp
-      print "Новий телефон: "
-      @contacts[index].phone = gets.chomp
-      puts "Контакт оновлено."
+  def add
+    print "ID: "
+    id = gets.to_i
+    print "Назва змагання: "
+    name = gets.chomp
+
+    print "Види спорту (через кому): "
+    sports = gets.chomp.split(',').map(&:strip).map { |s| Sport.new(s) }
+
+    teams = []
+    print "Кількість команд: "
+    team_count = gets.to_i
+    team_count.times do
+      print "Назва команди: "
+      team_name = gets.chomp
+      print "Телефони (через кому): "
+      phones = gets.chomp.split(',').map(&:strip)
+      teams << Team.new(team_name, phones)
+    end
+
+    @competitions << Competition.new(id, name, sports, teams)
+  end
+
+  def edit
+    print "ID: "
+    id = gets.to_i
+    comp = @competitions.find { |c| c.id == id }
+    return unless comp
+
+    print "Нова назва: "
+    comp.name = gets.chomp
+
+    print "Нові види спорту (через кому): "
+    comp.sports = gets.chomp.split(',').map(&:strip).map { |s| Sport.new(s) }
+
+    teams = []
+    print "Кількість команд: "
+    team_count = gets.to_i
+    team_count.times do
+      print "Назва команди: "
+      team_name = gets.chomp
+      print "Телефони (через кому): "
+      phones = gets.chomp.split(',').map(&:strip)
+      teams << Team.new(team_name, phones)
+    end
+    comp.teams = teams
+  end
+
+  def delete
+    print "ID: "
+    id = gets.to_i
+    @competitions.reject! { |c| c.id == id }
+  end
+
+  def search
+    print "Ключове слово: "
+    keyword = gets.chomp.downcase
+    @competitions.each do |c|
+      if c.name.downcase.include?(keyword)
+        puts "ID: #{c.id}, Назва: #{c.name}"
+      end
     end
   end
 
-  def delete_contact
-    print "Номер контакту для видалення: "
-    index = gets.to_i - 1
-    if @contacts[index]
-      @contacts.delete_at(index)
-      puts "Контакт видалено."
-    end
+  def save
+    data = @competitions.map(&:to_hash)
+    File.write("contacts.json", JSON.pretty_generate(data))
   end
 
-  def save_contacts
-    File.write("classes.json", JSON.pretty_generate(@contacts.map { |c| { name: c.name, phone: c.phone } }))
-    puts "Контакти збережено у файл."
+  private
+
+  def load_from_file
+    return [] unless File.exist?("contacts.json")
+    data = JSON.parse(File.read("contacts.json"), symbolize_names: true)
+    data.map { |item| Competition.from_hash(item) }
   end
 end
 
-contact_book = ContactBook.new
+manager = CompetitionManager.new
 
 loop do
-  puts "\n1. Переглянути контакти"
-  puts "2. Додати контакт"
-  puts "3. Редагувати контакт"
-  puts "4. Видалити контакт"
-  puts "5. Зберегти у файл"
-  puts "6. Вийти"
-  print "Ваш вибір: "
-  choice = gets.to_i
-
-  case choice
-  when 1 then contact_book.view_contacts
-  when 2 then contact_book.add_contact
-  when 3 then contact_book.edit_contact
-  when 4 then contact_book.delete_contact
-  when 5 then contact_book.save_contacts
-  when 6 then break
-  else break
+  puts "\n1. Перегляд\n2. Додавання\n3. Редагування\n4. Видалення\n5. Пошук\n6. Зберегти\n7. Вихід"
+  print "Оберіть: "
+  case gets.to_i
+  when 1 then manager.list
+  when 2 then manager.add
+  when 3 then manager.edit
+  when 4 then manager.delete
+  when 5 then manager.search
+  when 6 then manager.save
+  when 7 then break
   end
 end
