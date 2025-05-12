@@ -1,6 +1,13 @@
 [
   {
-    "name": "Danylo",
-    "phone": "066564859"
+    "id": 1,
+    "name": "Tournament",
+    "sports": [
+      "Atletics"
+    ],
+    "teams": [
+      "Ukraine",
+      "United States"
+    ]
   }
 ]

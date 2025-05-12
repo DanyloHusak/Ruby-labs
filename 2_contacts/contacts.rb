@@ -1,64 +1,67 @@
 require 'json'
 
-contacts = []
+competitions = []
 
-def add_contact(contacts)
-  print "Ім'я: "
+def add_competition(competitions)
+  print "ID: "
+  id = gets.to_i
+  print "Назва: "
   name = gets.chomp
-  print "Телефон: "
-  phone = gets.chomp
-  contacts << { name: name, phone: phone }
+  print "Види спорту (через кому): "
+  sports = gets.chomp.split(',').map(&:strip)
+  print "Команди (через кому): "
+  teams = gets.chomp.split(',').map(&:strip)
+  competitions << { id: id, name: name, sports: sports, teams: teams }
 end
 
-def view_contacts(contacts)
-  puts "\nКонтакти:"
-  contacts.each_with_index do |c, i|
-    puts "#{i + 1}. #{c[:name]} - #{c[:phone]}"
+def edit_competition(competitions)
+  print "ID: "
+  id = gets.to_i
+  comp = competitions.find { |c| c[:id] == id }
+  return unless comp
+  print "Нова назва: "
+  comp[:name] = gets.chomp
+  print "Нові види спорту (через кому): "
+  comp[:sports] = gets.chomp.split(',').map(&:strip)
+  print "Нові команди (через кому): "
+  comp[:teams] = gets.chomp.split(',').map(&:strip)
+end
+
+def delete_competition(competitions)
+  print "ID: "
+  id = gets.to_i
+  competitions.reject! { |c| c[:id] == id }
+end
+
+def search_competitions(competitions)
+  print "Ключове слово: "
+  keyword = gets.chomp.downcase
+  competitions.each do |c|
+    puts c if c[:name].downcase.include?(keyword)
   end
 end
 
-def edit_contact(contacts)
-  print "Номер контакту для редагування: "
-  index = gets.to_i - 1
-  if contacts[index]
-    print "Нове ім'я: "
-    contacts[index][:name] = gets.chomp
-    print "Новий телефон: "
-    contacts[index][:phone] = gets.chomp
-  end
+def save_to_file(competitions)
+  File.write("contacts.json", JSON.pretty_generate(competitions))
 end
 
-def delete_contact(contacts)
-  print "Номер контакту для видалення: "
-  index = gets.to_i - 1
-  if contacts[index]
-    contacts.delete_at(index)
-    puts "Видалено."
-  end
+def load_from_file
+  return [] unless File.exist?("contacts.json")
+  JSON.parse(File.read("contacts.json"), symbolize_names: true)
 end
 
-def save_contacts(contacts)
-  File.write("contacts.json", JSON.pretty_generate(contacts))
-  puts "Контакти збережено у файл."
-end
+competitions = load_from_file
 
 loop do
-  puts "\n1. Переглянути контакти"
-  puts "2. Додати контакт"
-  puts "3. Редагувати контакт"
-  puts "4. Видалити контакт"
-  puts "5. Зберегти у файл"
-  puts "6. Вийти"
-  print "Ваш вибір: "
-  choice = gets.to_i
-
-  case choice
-  when 1 then view_contacts(contacts)
-  when 2 then add_contact(contacts)
-  when 3 then edit_contact(contacts)
-  when 4 then delete_contact(contacts)
-  when 5 then save_contacts(contacts)
-  when 6 then break
-  else break
+  puts "\n1. Перегляд\n2. Додавання\n3. Редагування\n4. Видалення\n5. Пошук\n6. Зберегти\n7. Вихід"
+  print "Оберіть: "
+  case gets.to_i
+  when 1 then competitions.each { |c| puts c }
+  when 2 then add_competition(competitions)
+  when 3 then edit_competition(competitions)
+  when 4 then delete_competition(competitions)
+  when 5 then search_competitions(competitions)
+  when 6 then save_to_file(competitions)
+  when 7 then break
   end
 end
