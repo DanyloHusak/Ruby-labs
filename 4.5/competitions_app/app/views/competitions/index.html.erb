@@ -18,7 +18,9 @@
         <td>
           <%= link_to "Переглянути", competition, class: "btn btn-sm btn-info" %>
           <%= link_to "Редагувати", edit_competition_path(competition), class: "btn btn-sm btn-warning" %>
-          <%= link_to "Видалити", competition, method: :delete, data: { confirm: "Точно видалити?" }, class: "btn btn-sm btn-danger" %>
+          <%= form_with(model: competition, method: :delete, local: true) do |form| %>
+          <%= form.submit "Видалити", class: "btn btn-sm btn-danger", data: { confirm: "Точно видалити?" } %>
+          <% end %>
         </td>
       </tr>
     <% end %>
